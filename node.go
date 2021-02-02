@@ -11,12 +11,13 @@ var (
 )
 
 type node struct {
-	path     string
-	isRoot   bool
-	isLeaf   bool
-	children []*node
-	parent   *node
-	handlers HandlersChain
+	path      string
+	pathMatch string
+	isRoot    bool
+	isLeaf    bool
+	children  []*node
+	parent    *node
+	handlers  HandlersChain
 }
 
 func newNode(path string, isRoot bool) *node {
@@ -71,13 +72,27 @@ func (node *node) Add(url string, handlers HandlersChain) error {
 }
 
 func (node *node) add(paths []string, handlers HandlersChain) error {
+	path := paths[0]
 	for i := 0; i < len(node.children); i++ {
-		if node.children[i].path == paths[0] {
+		if node.children[i].path == path {
 			return node.children[i].add(paths[1:], handlers)
 		}
 	}
-	sonNode := newNode(paths[0], false)
+
+	//支持restful接口
+	if len(path) > 0 && path[0] == ':' {
+		for i := 0; i < len(node.children); i++ {
+			if node.children[i].pathMatch == path {
+				return node.children[i].add(paths[1:], handlers)
+			}
+		}
+	}
+
+	sonNode := newNode(path, false)
 	sonNode.parent = node
+	if len(path) > 0 && path[0] == ':' {
+		sonNode.pathMatch = path
+	}
 	node.children = append(node.children, sonNode)
 	if len(paths) == 1 {
 		sonNode.handlers = handlers

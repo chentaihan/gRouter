@@ -1,5 +1,7 @@
 package gRouter
 
+import "regexp"
+
 //GET POST  PUT  PATCH  HEAD  OPTIONS  DELETE  CONNECT  TRACE
 var (
 	methodList = []string{
@@ -21,7 +23,9 @@ type tree struct {
 }
 
 func newTree(method string) *tree {
-	checkMethod(method)
+	if isDebug {
+		checkMethod(method)
+	}
 	return &tree{
 		method: method,
 		root:   newNode("", true),
@@ -37,7 +41,21 @@ func checkMethod(method string) {
 	panic("method is error")
 }
 
+func checkUrl(url string) {
+	rule := "[a-zA-Z0-9-._~!$&'/()*+,;=:]*"
+	reg, err := regexp.Compile(rule)
+	if err != nil {
+		panic(err)
+	}
+	if !reg.Match([]byte(url)) {
+		panic(errorUrlFormat)
+	}
+}
+
 func (tree *tree) Add(url string, handlers ...HandlerFunc) error {
+	if isDebug {
+		checkUrl(url)
+	}
 	return tree.root.Add(url, handlers)
 }
 
@@ -66,7 +84,6 @@ func (tree *tree) pathList(list *[]string, root *node, subPath string) {
 	if root.path != "" {
 		subPath += "/" + root.path
 	}
-
 	if root.isLeaf {
 		if root.isRoot {
 			*list = append(*list, "/")
