@@ -2,7 +2,6 @@ package gRouter
 
 import "regexp"
 
-//GET POST  PUT  PATCH  HEAD  OPTIONS  DELETE  CONNECT  TRACE
 var (
 	methodList = []string{
 		"POST",
@@ -23,7 +22,7 @@ type tree struct {
 }
 
 func newTree(method string) *tree {
-	if isDebug {
+	if _isDebug {
 		checkMethod(method)
 	}
 	return &tree{
@@ -52,8 +51,8 @@ func checkUrl(url string) {
 	}
 }
 
-func (tree *tree) Add(url string, handlers ...HandlerFunc) error {
-	if isDebug {
+func (tree *tree) Add(url string, handlers HandlersChain) error {
+	if _isDebug {
 		checkUrl(url)
 	}
 	return tree.root.Add(url, handlers)
