@@ -2,6 +2,8 @@ package gRouter
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 )
 
@@ -9,18 +11,24 @@ var (
 	_isDebug = true
 )
 
+const defaultMultipartMemory = 32 << 20 // 32 MB
+
 type Engine struct {
 	router
-	trees    []*tree
-	noMethod HandlersChain
-	noRoute  HandlersChain
-	pool     sync.Pool
+	trees              []*tree
+	noMethod           HandlersChain
+	noRoute            HandlersChain
+	pool               sync.Pool
+	MaxMultipartMemory int64
 }
 
 func NewEngine(isDebug bool) *Engine {
 	_isDebug = isDebug
-	engine := &Engine{}
+	engine := &Engine{
+		MaxMultipartMemory: defaultMultipartMemory,
+	}
 	engine.router.engine = engine
+
 	engine.noMethod = HandlersChain{engine.noMethodDefault}
 	engine.noRoute = HandlersChain{engine.noRouteDefault}
 	engine.pool.New = func() interface{} {
@@ -59,25 +67,61 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := engine.pool.Get().(*Context)
 	ctx.Writer = responseWriter{w, 0, 0}
 	ctx.Request = req
+	ctx.engine = engine
 	engine.handleRequest(ctx)
 	ctx.reset()
 	engine.pool.Put(ctx)
 }
 
 func (engine *Engine) handleRequest(ctx *Context) {
-	url := ctx.Request.URL.Path
 	tree := engine.getTree(ctx.Request.Method)
 	if tree == nil {
 		ctx.handlers = engine.noMethod
 	} else {
-		handlers, err := tree.Find(url)
+		node, err := tree.Find(ctx.Request.URL.Path)
 		if err != nil {
 			ctx.handlers = engine.noRoute
 		} else {
-			ctx.handlers = handlers
+			ctx.handlers = node.handlers
+			ctx.getCache = engine.getParam(node, ctx.Request.URL, ctx.getCache)
 		}
 	}
 	ctx.Next()
+}
+
+//获取get请求参数，restful接口中uri中的参数 + get参数
+func (engine *Engine) getParam(node *node, urlValue *url.URL, params []Param) []Param {
+	//uri参数
+	uri := urlValue.Path
+	paths := strings.Split(uri, "/")
+	for i := 0; i < len(paths); i++ {
+		if node == nil {
+			break
+		}
+		if node.nType == nodeTypeParam {
+			path := paths[len(paths)-1-i]
+			if value, err := url.QueryUnescape(path); err == nil {
+				params = append(params, Param{
+					Key:   node.path,
+					Value: value,
+				})
+			}
+		}
+		node = node.parent
+	}
+
+	//get参数
+	values, _ := url.ParseQuery(urlValue.RawQuery)
+	for key, value := range values {
+		if len(value) > 0 {
+			params = append(params, Param{
+				Key:   key,
+				Value: value[0],
+			})
+		}
+	}
+
+	return params
 }
 
 func (engine *Engine) noMethodDefault(ctx *Context) {
@@ -98,4 +142,12 @@ func (engine *Engine) NoRoute(handlers ...HandlerFunc) {
 	if len(handlers) > 0 {
 		engine.noRoute = handlers
 	}
+}
+
+func (engine *Engine) GetAllPath() map[string][]string {
+	m := map[string][]string{}
+	for _, tree := range engine.trees {
+		m[tree.method] = tree.PathList()
+	}
+	return m
 }

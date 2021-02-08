@@ -31,7 +31,7 @@ var urlsTest = []string{
 func createTree() *tree {
 	tree := newTree("POST")
 	for _, url := range urlsTest {
-		tree.Add(url, handlerTest)
+		tree.Add(url, HandlersChain{handlerTest})
 	}
 	return tree
 }

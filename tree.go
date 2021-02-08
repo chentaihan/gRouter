@@ -58,15 +58,7 @@ func (tree *tree) Add(url string, handlers HandlersChain) error {
 	return tree.root.Add(url, handlers)
 }
 
-func (tree *tree) Find(url string) (HandlersChain, error) {
-	node, err := tree.find(url)
-	if err != nil {
-		return nil, err
-	}
-	return node.handlers, nil
-}
-
-func (tree *tree) find(url string) (*node, error) {
+func (tree *tree) Find(url string) (*node, error) {
 	return tree.root.Find(url)
 }
 

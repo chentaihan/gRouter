@@ -56,6 +56,14 @@ func initRoute() *gRouter.Engine {
 	r.Use(Before)
 	r.POST("/ping", Ping)
 	r.POST("/json", PingJson)
-	r.POST("/text", PingText)
+	r.GET("/get", Get)
+	r.GET("/:value/get", Get)
+	r.POST("/:restful/postform", RestfulPostForm)
+	r.POST("/:restful/postjson", RestfulPostJson)
+	r.POST("/:restful/header", RestfulHeader)
+	r.POST("/match/*", MatchAll)
+
+	urls := engine.GetAllPath()
+	fmt.Println(urls)
 	return engine
 }
