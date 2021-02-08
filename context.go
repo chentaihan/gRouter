@@ -110,7 +110,7 @@ func (ctx *Context) loadPostForm() {
 	if ctx.formCache == nil {
 		ctx.formCache = make(url.Values)
 		req := ctx.Request
-		if err := req.ParseMultipartForm(ctx.engine.MaxMultipartMemory); err != nil {
+		if err := req.ParseMultipartForm(ctx.engine.Option.MaxMultipartMemory); err != nil {
 			//log TODO
 		}
 		ctx.formCache = req.PostForm

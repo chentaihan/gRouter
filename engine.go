@@ -11,21 +11,19 @@ var (
 	_isDebug = true
 )
 
-const defaultMultipartMemory = 32 << 20 // 32 MB
-
 type Engine struct {
 	router
-	trees              []*tree
-	noMethod           HandlersChain
-	noRoute            HandlersChain
-	pool               sync.Pool
-	MaxMultipartMemory int64
+	Option   *Option
+	trees    []*tree
+	noMethod HandlersChain
+	noRoute  HandlersChain
+	pool     sync.Pool
 }
 
 func NewEngine(isDebug bool) *Engine {
 	_isDebug = isDebug
 	engine := &Engine{
-		MaxMultipartMemory: defaultMultipartMemory,
+		Option: Opt,
 	}
 	engine.router.engine = engine
 
@@ -150,4 +148,8 @@ func (engine *Engine) GetAllPath() map[string][]string {
 		m[tree.method] = tree.PathList()
 	}
 	return m
+}
+
+func (engine *Engine) SetDebug(isDebug bool) {
+	_isDebug = isDebug
 }
