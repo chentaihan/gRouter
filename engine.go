@@ -13,17 +13,18 @@ var (
 
 type Engine struct {
 	router
-	Option   *Option
+	log      ILog
+	option   *option
 	trees    []*tree
 	noMethod HandlersChain
 	noRoute  HandlersChain
 	pool     sync.Pool
 }
 
-func NewEngine(isDebug bool) *Engine {
-	_isDebug = isDebug
+func NewEngine() *Engine {
 	engine := &Engine{
-		Option: Opt,
+		option: Option,
+		log:    &log{},
 	}
 	engine.router.engine = engine
 

@@ -1,21 +1,23 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
+	"github.com/chentaihan/gRouter"
 )
 
 func main() {
-	server := NewHttpServer(10086)
-	server.Start()
+	server := gRouter.NewServer()
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Kill, syscall.SIGTERM, syscall.SIGINT)
-	single := <-ch
-	server.Stop()
-	if i, ok := single.(syscall.Signal); ok {
-		fmt.Println("main exit ", i)
-	}
+	server.ANY("/ping", Ping)
+	r := server.NewRouter("/api")
+	r.Use(Before)
+	r.POST("/ping", Ping)
+	r.POST("/json", PingJson)
+	r.GET("/get", Get)
+	r.GET("/:value/get", Get)
+	r.POST("/:restful/postform", RestfulPostForm)
+	r.POST("/:restful/postjson", RestfulPostJson)
+	r.POST("/:restful/header", RestfulHeader)
+	r.POST("/match/*", MatchAll)
+
+	server.Run()
 }

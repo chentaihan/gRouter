@@ -1,6 +1,8 @@
 package gRouter
 
-import "strings"
+import (
+	"strings"
+)
 
 type IRouter interface {
 	Use(handler ...HandlerFunc) IRouter
@@ -53,6 +55,7 @@ func (router *router) handle(method, relativePath string, handlers ...HandlerFun
 	if tree == nil {
 		tree = router.engine.addTree(method)
 	}
+	router.engine.log.Infof("router.handle %v %v %v", method, relativePath, HandlersChain(handlers).Names())
 	tree.Add(path, handlers)
 }
 
