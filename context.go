@@ -38,10 +38,10 @@ type responseWriter struct {
 
 func (ctx *Context) reset() {
 	ctx.handlers = ctx.handlers[:0]
-	ctx.index = -1
 	ctx.getCache = ctx.getCache[:0]
 	ctx.formCache = nil
 	ctx.jsonCache = nil
+	ctx.index = -1
 }
 
 func (ctx *Context) Next() {
@@ -111,7 +111,7 @@ func (ctx *Context) loadPostForm() {
 		ctx.formCache = make(url.Values)
 		req := ctx.Request
 		if err := req.ParseMultipartForm(ctx.engine.option.MaxMultipartMemory); err != nil {
-			//log TODO
+			ctx.engine.log.Errorf("Context.loadPostForm error=%v", err.Error())
 		}
 		ctx.formCache = req.PostForm
 	}
@@ -150,7 +150,7 @@ func (ctx *Context) loadPostJson() error {
 		defer req.Body.Close()
 		body, err := ioutil.ReadAll(req.Body)
 		if nil != err {
-			//log TODO
+			ctx.engine.log.Errorf("Context.loadPostJson error=%v", err.Error())
 			return err
 		}
 		return json.Unmarshal(body, &ctx.jsonCache)

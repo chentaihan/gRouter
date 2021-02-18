@@ -75,10 +75,12 @@ func (engine *engine) handleRequest(ctx *Context) {
 	tree := engine.getTree(ctx.Request.Method)
 	if tree == nil {
 		ctx.handlers = engine.noMethod
+		engine.log.Warnf("engine.handleRequest method=%v not found", ctx.Request.Method)
 	} else {
 		node, err := tree.Find(ctx.Request.URL.Path)
 		if err != nil {
 			ctx.handlers = engine.noRoute
+			engine.log.Warnf("engine.handleRequest error=%v", err.Error())
 		} else {
 			ctx.handlers = node.handlers
 			ctx.getCache = engine.getParam(node, ctx.Request.URL, ctx.getCache)
