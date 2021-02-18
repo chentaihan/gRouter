@@ -4,28 +4,13 @@ import (
 	"strings"
 )
 
-type IRouter interface {
-	Use(handler ...HandlerFunc) IRouter
-	Handle(method, relativePath string, handlers ...HandlerFunc)
-	POST(relativePath string, handlers ...HandlerFunc)
-	GET(relativePath string, handlers ...HandlerFunc)
-	HEAD(relativePath string, handlers ...HandlerFunc)
-	PUT(relativePath string, handlers ...HandlerFunc)
-	OPTIONS(relativePath string, handlers ...HandlerFunc)
-	PATCH(relativePath string, handlers ...HandlerFunc)
-	DELETE(relativePath string, handlers ...HandlerFunc)
-	CONNECT(relativePath string, handlers ...HandlerFunc)
-	TRACE(relativePath string, handlers ...HandlerFunc)
-	ANY(relativePath string, handlers ...HandlerFunc)
-}
-
 type router struct {
 	basePath string
 	handlers HandlersChain
-	engine   *Engine
+	engine   *engine
 }
 
-func newRouter(engine *Engine, basePath string, handler ...HandlerFunc) IRouter {
+func newRouter(engine *engine, basePath string, handler ...HandlerFunc) IRouter {
 	//去掉最后的/
 	basePath = strings.TrimSpace(basePath)
 	if len(basePath) > 0 && basePath[len(basePath)-1] == '/' {
@@ -60,7 +45,7 @@ func (router *router) handle(method, relativePath string, handlers ...HandlerFun
 }
 
 func (router *router) Handle(method, relativePath string, handlers ...HandlerFunc) {
-	if _isDebug {
+	if isDebug {
 		checkMethod(method)
 	}
 	router.handle(method, relativePath, handlers...)

@@ -10,22 +10,27 @@ import (
 )
 
 type HttpServer struct {
-	*Engine
+	IEngine
 	srv *http.Server
 }
 
-func NewServer() *HttpServer {
-	engine := NewEngine()
+func NewServer(opt *Option) *HttpServer {
+	engine := NewEngine(opt)
 	serv := &HttpServer{
-		Engine: engine,
+		IEngine: engine,
 		srv: &http.Server{
-			Addr:         fmt.Sprintf(":%d", engine.option.HttpPort),
+			Addr:         fmt.Sprintf(":%d", option.HttpPort),
 			Handler:      engine,
-			ReadTimeout:  engine.option.ReadTimeout,
-			WriteTimeout: engine.option.WriteTimeout,
+			ReadTimeout:  option.ReadTimeout,
+			WriteTimeout: option.WriteTimeout,
 		},
 	}
 	return serv
+}
+
+func DefaultServer() *HttpServer {
+	opt := &Option{}
+	return NewServer(opt)
 }
 
 func (h *HttpServer) Run() {

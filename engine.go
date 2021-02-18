@@ -8,43 +8,42 @@ import (
 )
 
 var (
-	_isDebug = true
+	isDebug = true
 )
 
-type Engine struct {
+type engine struct {
 	router
 	log      ILog
-	option   *option
+	option   *Option
 	trees    []*tree
 	noMethod HandlersChain
 	noRoute  HandlersChain
 	pool     sync.Pool
 }
 
-func NewEngine() *Engine {
-	engine := &Engine{
-		option: Option,
+func NewEngine(opt *Option) IEngine {
+	engine := &engine{
+		option: setOption(opt),
 		log:    &log{},
 	}
 	engine.router.engine = engine
-
 	engine.noMethod = HandlersChain{engine.noMethodDefault}
 	engine.noRoute = HandlersChain{engine.noRouteDefault}
 	engine.pool.New = func() interface{} {
 		return newContext()
 	}
-
+	isDebug = engine.option.IsDebug
 	for _, method := range []string{"POST", "GET"} {
 		engine.trees = append(engine.trees, newTree(method))
 	}
 	return engine
 }
 
-func (engine *Engine) NewRouter(basePath string, handlers ...HandlerFunc) IRouter {
+func (engine *engine) NewRouter(basePath string, handlers ...HandlerFunc) IRouter {
 	return newRouter(engine, basePath, handlers...)
 }
 
-func (engine *Engine) getTree(method string) *tree {
+func (engine *engine) getTree(method string) *tree {
 	for _, tree := range engine.trees {
 		if tree.method == method {
 			return tree
@@ -53,7 +52,7 @@ func (engine *Engine) getTree(method string) *tree {
 	return nil
 }
 
-func (engine *Engine) addTree(method string) *tree {
+func (engine *engine) addTree(method string) *tree {
 	tree := engine.getTree(method)
 	if tree == nil {
 		tree = newTree(method)
@@ -62,7 +61,7 @@ func (engine *Engine) addTree(method string) *tree {
 	return tree
 }
 
-func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (engine *engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := engine.pool.Get().(*Context)
 	ctx.Writer = responseWriter{w, 0, 0}
 	ctx.Request = req
@@ -72,7 +71,7 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	engine.pool.Put(ctx)
 }
 
-func (engine *Engine) handleRequest(ctx *Context) {
+func (engine *engine) handleRequest(ctx *Context) {
 	tree := engine.getTree(ctx.Request.Method)
 	if tree == nil {
 		ctx.handlers = engine.noMethod
@@ -89,7 +88,7 @@ func (engine *Engine) handleRequest(ctx *Context) {
 }
 
 //获取get请求参数，restful接口中uri中的参数 + get参数
-func (engine *Engine) getParam(node *node, urlValue *url.URL, params []Param) []Param {
+func (engine *engine) getParam(node *node, urlValue *url.URL, params []Param) []Param {
 	//uri参数
 	uri := urlValue.Path
 	paths := strings.Split(uri, "/")
@@ -123,27 +122,27 @@ func (engine *Engine) getParam(node *node, urlValue *url.URL, params []Param) []
 	return params
 }
 
-func (engine *Engine) noMethodDefault(ctx *Context) {
+func (engine *engine) noMethodDefault(ctx *Context) {
 	ctx.TEXT(http.StatusMethodNotAllowed, "405 method not allowed")
 }
 
-func (engine *Engine) NoMethod(handlers ...HandlerFunc) {
+func (engine *engine) NoMethod(handlers ...HandlerFunc) {
 	if len(handlers) > 0 {
 		engine.noMethod = handlers
 	}
 }
 
-func (engine *Engine) noRouteDefault(ctx *Context) {
+func (engine *engine) noRouteDefault(ctx *Context) {
 	ctx.TEXT(http.StatusNotFound, "404 page not found")
 }
 
-func (engine *Engine) NoRoute(handlers ...HandlerFunc) {
+func (engine *engine) NoRoute(handlers ...HandlerFunc) {
 	if len(handlers) > 0 {
 		engine.noRoute = handlers
 	}
 }
 
-func (engine *Engine) GetAllPath() map[string][]string {
+func (engine *engine) GetAllPath() map[string][]string {
 	m := map[string][]string{}
 	for _, tree := range engine.trees {
 		m[tree.method] = tree.PathList()
@@ -151,6 +150,6 @@ func (engine *Engine) GetAllPath() map[string][]string {
 	return m
 }
 
-func (engine *Engine) SetDebug(isDebug bool) {
-	_isDebug = isDebug
+func (engine *engine) SetLog(log ILog) {
+	engine.log = log
 }

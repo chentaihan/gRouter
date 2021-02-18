@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	server := gRouter.NewServer()
+	server := gRouter.DefaultServer()
 
 	server.ANY("/ping", Ping)
 	r := server.NewRouter("/api")

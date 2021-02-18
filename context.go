@@ -16,7 +16,7 @@ type Context struct {
 	formCache url.Values             //POST FORM参数
 	jsonCache map[string]interface{} //POST JSON参数
 	index     int8
-	engine    *Engine
+	engine    *engine
 }
 
 type Param struct {

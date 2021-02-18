@@ -22,7 +22,7 @@ type tree struct {
 }
 
 func newTree(method string) *tree {
-	if _isDebug {
+	if isDebug {
 		checkMethod(method)
 	}
 	return &tree{
@@ -52,7 +52,7 @@ func checkUrl(url string) {
 }
 
 func (tree *tree) Add(url string, handlers HandlersChain) error {
-	if _isDebug {
+	if isDebug {
 		checkUrl(url)
 	}
 	return tree.root.Add(url, handlers)
