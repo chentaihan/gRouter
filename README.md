@@ -1,7 +1,7 @@
 # gRouter
 ## gRouter是golang编写的高性能web框架
-## 使用方式和gin类似，实现比gin更简单、性能更好
-## 支持restful接口
+### 使用方式和gin类似，实现比gin更简单、性能更好
+### 支持restful接口
 
 ```go
 package main
